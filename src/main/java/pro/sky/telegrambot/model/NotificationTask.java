@@ -20,8 +20,7 @@ public class NotificationTask {
     @Column(name = "task_date_time")
     private LocalDateTime task_date_time;
 
-    public NotificationTask(int id, Long chat_id, String text, LocalDateTime task_date_time) {
-        this.id = id;
+    public NotificationTask(Long chat_id, String text, LocalDateTime task_date_time) {
         this.chat_id = chat_id;
         this.text = text;
         this.task_date_time = task_date_time;
