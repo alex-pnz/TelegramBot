@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.model.NotificationTask;
 import pro.sky.telegrambot.repository.NotificationTaskRepository;
+import pro.sky.telegrambot.service.NotificationTaskService;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
@@ -23,11 +24,13 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
 
     private Logger logger = LoggerFactory.getLogger(TelegramBotUpdatesListener.class);
 
-    @Autowired
-    private TelegramBot telegramBot;
+    private final TelegramBot telegramBot;
+    private final NotificationTaskService service;
 
-    @Autowired
-    private NotificationTaskRepository repository;
+    public TelegramBotUpdatesListener(TelegramBot telegramBot, NotificationTaskService service) {
+        this.telegramBot = telegramBot;
+        this.service = service;
+    }
 
     @PostConstruct
     public void init() {
@@ -37,38 +40,21 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
 
-        Pattern pattern = Pattern.compile("(^\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2})(\\s)(.+$)");
-
         updates.forEach(update -> {
             logger.info("Processing update: {}", update);
             Long chatId = update.message().chat().id();
             // Process your updates here
-            if (update.message().text().equals("/start")){
-
-                SendMessage sendMessage = new SendMessage(chatId,"Hello my friend! Set your task!");
-                telegramBot.execute(sendMessage);
-
-            }
-
             String message = update.message().text();
-            Matcher matcher = pattern.matcher(message);
-
-            String date_time = null, text = null;
-
-            if (matcher.find()) {
-                date_time = matcher.group(1);
-                text = matcher.group(3);
+            SendMessage sendMessage = null;
+            if (update.message().text().equals("/start")){
+                if (!service.replyStart(chatId)) {
+                    service.sendSomethingWrong(chatId);
+                }
+            } else {
+                if (!service.saveTask(chatId, message)) {
+                    service.sendSomethingWrong(chatId);
+                }
             }
-
-            if (date_time != null && text != null) {
-                NotificationTask task = new NotificationTask(chatId,
-                        text,
-                        LocalDateTime.parse(date_time,
-                                DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
-
-                repository.save(task);
-            }
-
 
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
