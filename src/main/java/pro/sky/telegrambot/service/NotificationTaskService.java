@@ -76,7 +76,9 @@ public class NotificationTaskService {
     public void findTasks() {
         List<NotificationTask> list = repository.findTasks(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
         if (!list.isEmpty()) {
-            System.out.println(list.get(0).getText());
+            list.forEach(n ->
+                telegramBot.execute(new SendMessage(n.getChat_id(),n.getText()))
+            );
         }
     }
 
