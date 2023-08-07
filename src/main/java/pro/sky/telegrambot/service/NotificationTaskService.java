@@ -1,9 +1,8 @@
 package pro.sky.telegrambot.service;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
-import liquibase.pro.packaged.L;
+import com.pengrad.telegrambot.response.SendResponse;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.model.NotificationTask;
@@ -31,16 +30,15 @@ public class NotificationTaskService {
         this.telegramBot = telegramBot;
     }
 
-    public boolean replyStart(Long chatId) {
+    public SendResponse replyStart(Long chatId) {
         if (chatId != null && chatId >= 0) {
             sendMessage = new SendMessage(chatId,"Hello my friend! Set your task!");
-            telegramBot.execute(sendMessage);
-            return true;
+            return telegramBot.execute(sendMessage);
         }
-        return false;
+        return null;
     }
 
-    public boolean saveTask(Long chatId, String message) {
+    public SendResponse saveTask(Long chatId, String message) {
         if (chatId != null && chatId >= 0 && message != null) {
             Matcher matcher = pattern.matcher(message);
 
@@ -49,6 +47,8 @@ public class NotificationTaskService {
             if (matcher.find()) {
                 date_time = matcher.group(1);
                 text = matcher.group(3);
+            } else {
+                return null;
             }
 
             if (date_time != null && text != null) {
@@ -61,10 +61,9 @@ public class NotificationTaskService {
             }
 
             sendMessage = new SendMessage(chatId,"New task added successfully!");
-            telegramBot.execute(sendMessage);
-            return true;
+            return telegramBot.execute(sendMessage);
         }
-        return false;
+        return null;
     }
 
     public void sendSomethingWrong(Long chatId){
